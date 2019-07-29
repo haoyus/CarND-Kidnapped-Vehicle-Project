@@ -12,7 +12,6 @@
 #include <iostream>
 #include <iterator>
 #include <numeric>
-#include <random>
 #include <string>
 #include <vector>
 
@@ -20,6 +19,8 @@
 
 using std::string;
 using std::vector;
+using std::normal_distribution;
+using std::default_random_engine;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
   /**
@@ -30,7 +31,23 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 0;  // TODO: Set the number of particles
+  num_particles = 1000;  // TODO: Set the number of particles
+  default_random_engine gen;
+  normal_distribution<double> distr_x(x,std[0]);
+  normal_distribution<double> distr_y(y,std[1]);
+  normal_distribution<double> distr_theta(theta,std[2]);
+
+  for(int i=0;i<num_particles;i++){
+    Particle tmp;
+    tmp.id = i;
+    tmp.x = distr_x(gen);
+    tmp.y = distr_y(gen);
+    tmp.theta = distr_theta(gen);
+    tmp.weight = 1;
+    particles.push_back(tmp);
+  }
+
+  this->is_initialized = true;
 
 }
 
@@ -43,7 +60,40 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
    *  http://www.cplusplus.com/reference/random/default_random_engine/
    */
+  default_random_engine gen;
+  normal_distribution<double> distr_x(0,std_pos[0]);
+  normal_distribution<double> distr_y(0,std_pos[1]);
+  normal_distribution<double> distr_theta(0,std_pos[2]);
 
+  std::vector<Particle>::iterator itr = particles.begin();
+  for(;itr!=particles.end();++itr){
+    Move((*itr),velocity,yaw_rate,delta_t,distr_x,distr_y,distr_theta,gen);
+  }
+}
+
+void ParticleFilter::Move(Particle& particle, double vel, double yawRate, double dt,
+            std::normal_distribution<double>& distr_x,
+            std::normal_distribution<double>& distr_y,
+            std::normal_distribution<double>& distr_theta,
+            std::default_random_engine& gen)
+{
+  double dx = 0, dy = 0, dtheta = 0;
+  if(yawRate == 0){
+    dx = vel*dt*cos(particle.theta);
+    dy = vel*dt*sin(particle.theta);
+  }
+  else{
+    dx = vel/yawRate*(sin(particle.theta+yawRate*dt)-sin(particle.theta));
+    dy = vel/yawRate*(cos(particle.theta)-cos(particle.theta+yawRate*dt));
+    dtheta = yawRate*dt;
+  }
+  
+  std::normal_distribution<double>::param_type xParam(dx, distr_x.param().stddev());
+  std::normal_distribution<double>::param_type yParam(dy, distr_y.param().stddev());
+  std::normal_distribution<double>::param_type thetaParam(dtheta, distr_theta.param().stddev());
+  particle.x += distr_x(gen,xParam);
+  particle.y += distr_y(gen,yParam);
+  particle.theta += distr_theta(gen,thetaParam);
 }
 
 void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, 

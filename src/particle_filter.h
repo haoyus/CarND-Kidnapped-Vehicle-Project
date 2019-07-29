@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <random>
 #include "helper_functions.h"
 
 struct Particle {
@@ -95,6 +96,14 @@ class ParticleFilter {
                        const std::vector<double>& sense_x, 
                        const std::vector<double>& sense_y);
 
+  /**
+   * Move a particle
+   */
+  void Move(Particle& particle, double vel, double yawRate, double dt,
+            std::normal_distribution<double>& distr_x,
+            std::normal_distribution<double>& distr_y,
+            std::normal_distribution<double>& distr_theta,
+            std::default_random_engine& gen);
   /**
    * initialized Returns whether particle filter is initialized yet or not.
    */
