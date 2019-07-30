@@ -21,6 +21,8 @@ using std::string;
 using std::vector;
 using std::normal_distribution;
 using std::default_random_engine;
+using std::discrete_distribution;
+using std::uniform_real_distribution;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
   /**
@@ -31,7 +33,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 1000;  // TODO: Set the number of particles
+  this->num_particles = 1000;  // TODO: Set the number of particles
   default_random_engine gen;
   normal_distribution<double> distr_x(x,std[0]);
   normal_distribution<double> distr_y(y,std[1]);
@@ -110,7 +112,7 @@ void ParticleFilter::dataAssociation(Particle& particle,
   std::vector<int> asso;
   std::vector<double> assoX;
   std::vector<double> assoY;
-
+  //TODO: re-write using KD Tree
   for(auto itr = observations.begin(); itr != observations.end(); ++itr){
     //iterate through the copy of observation, do coord trans into WCS
     double tmpX = itr->x, tmpY = itr->y;
@@ -125,7 +127,7 @@ void ParticleFilter::dataAssociation(Particle& particle,
         itr->id = landmark.id;
       }
     }
-    //in this particls's copy of observation, coord is now WCS, ids are their matched LM's ids
+    //in this particls's copy of observations, coord is now WCS, ids are their matched LM's ids
     //Now set association
     asso.push_back(itr->id);
     assoX.push_back(itr->x);
@@ -168,17 +170,37 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   and the following is a good resource for the actual equation to implement
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
-  default_random_engine seed;
+  double normalizer = 0;
   for(auto itr = particles.begin();itr!=particles.end();++itr){
     std::vector<LandmarkObs> landMarksInRange;
     std::vector<LandmarkObs> tmpObservations = observations;
     Observe((*itr),map_landmarks,sensor_range,landMarksInRange);
     dataAssociation((*itr),landMarksInRange,tmpObservations);
     //update weight for this particle
-    for(int i=0;i<itr->associations.size();i++){
+    for(unsigned int i=0;i<itr->associations.size();i++){
+      //Get pseudo ranges as map landmark's x and y
+      double pseudo_x, pseudo_y;
+      for(auto& Lmk_gt : landMarksInRange){
+        if(itr->associations.at(i)==Lmk_gt.id){
+          pseudo_x = Lmk_gt.x;
+          pseudo_y = Lmk_gt.y;
+          break;
+        }
+      }
+      itr->weight *= multiv_prob(std_landmark[0],std_landmark[1],
+                                 itr->sense_x.at(i),itr->sense_y.at(i),
+                                 pseudo_x,pseudo_y);
+      //end multiplying weight for one measurement
+    }
+    //end updating weight for one particle
+    normalizer += itr->weight;
+  }
+  if(normalizer>0){
+    for(auto & ptcl : particles){
+      ptcl.weight /= normalizer;
     }
   }
-
+  
 }
 
 void ParticleFilter::resample() {
@@ -188,7 +210,27 @@ void ParticleFilter::resample() {
    * NOTE: You may find std::discrete_distribution helpful here.
    *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
    */
-
+  default_random_engine gen;
+  discrete_distribution<int> distr_i(0,num_particles);
+  std::vector<Particle> tmpParticles;
+  //TODO: re-write Particle to compare
+  //auto itr_max = std::max_element(particles.begin(),particles.end());
+  double max_w = -1;
+  double beta = 0;
+  for(const auto& particle : particles){
+    max_w = (particle.weight>max_w) ? particle.weight : max_w;
+  }
+  uniform_real_distribution<double> distr_w(0.0,max_w*2.0);
+  for(int i=0; i<num_particles; i++){
+    unsigned int ind = distr_i(gen);
+    beta += distr_w(gen);
+    while(beta>particles.at(ind).weight){
+      beta -= particles.at(ind).weight;
+      ind = (ind+1)%num_particles;
+    }
+    tmpParticles.push_back(particles.at(ind));
+  }
+  particles = tmpParticles;
 }
 
 void ParticleFilter::SetAssociations(Particle& particle, 
