@@ -43,7 +43,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
     tmp.x = distr_x(gen);
     tmp.y = distr_y(gen);
     tmp.theta = distr_theta(gen);
-    tmp.weight = 1;
+    tmp.weight = 1.0;
     particles.push_back(tmp);
   }
 
@@ -168,13 +168,15 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   and the following is a good resource for the actual equation to implement
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
+  default_random_engine seed;
   for(auto itr = particles.begin();itr!=particles.end();++itr){
     std::vector<LandmarkObs> landMarksInRange;
     std::vector<LandmarkObs> tmpObservations = observations;
     Observe((*itr),map_landmarks,sensor_range,landMarksInRange);
     dataAssociation((*itr),landMarksInRange,tmpObservations);
-    //update weight
-    
+    //update weight for this particle
+    for(int i=0;i<itr->associations.size();i++){
+    }
   }
 
 }
