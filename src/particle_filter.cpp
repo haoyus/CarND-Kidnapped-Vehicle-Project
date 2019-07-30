@@ -96,7 +96,8 @@ void ParticleFilter::Move(Particle& particle, double vel, double yawRate, double
   particle.theta += distr_theta(gen,thetaParam);
 }
 
-void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, 
+void ParticleFilter::dataAssociation(Particle& particle,
+                                     const vector<LandmarkObs>& predicted, 
                                      vector<LandmarkObs>& observations) {
   /**
    * TODO: Find the predicted measurement that is closest to each 
@@ -106,8 +107,50 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   probably find it useful to implement this method and use it as a helper 
    *   during the updateWeights phase.
    */
+  std::vector<int> asso;
+  std::vector<double> assoX;
+  std::vector<double> assoY;
+
+  for(auto itr = observations.begin(); itr != observations.end(); ++itr){
+    //iterate through the copy of observation, do coord trans into WCS
+    double tmpX = itr->x, tmpY = itr->y;
+    itr->x = particle.x + tmpX*cos(particle.theta) - tmpY*sin(particle.theta);
+    itr->y = particle.y + tmpX*sin(particle.theta) + tmpY*cos(particle.theta);
+    double minDist = 100000;
+    //compare and associate with list of landmarks in range in WCS
+    for(auto & landmark : predicted){
+      double distance = dist(itr->x,itr->y,landmark.x,landmark.y);
+      if(distance<minDist){
+        minDist = distance;
+        itr->id = landmark.id;
+      }
+    }
+    //in this particls's copy of observation, coord is now WCS, ids are their matched LM's ids
+    //Now set association
+    asso.push_back(itr->id);
+    assoX.push_back(itr->x);
+    assoY.push_back(itr->y);
+  }
+  SetAssociations(particle,asso,assoX,assoY);
 
 }
+
+void ParticleFilter::Observe(const Particle& particle,
+              const Map& map,
+              double sensor_range,
+              std::vector<LandmarkObs>& LandMarksInRange)
+{
+  for(auto & landmark : map.landmark_list){
+    if(dist(landmark.x_f,landmark.y_f,particle.x,particle.y)<=sensor_range){
+      LandmarkObs tmpObs;
+      tmpObs.id = landmark.id_i;
+      tmpObs.x = landmark.x_f;
+      tmpObs.y = landmark.y_f;
+      LandMarksInRange.push_back(tmpObs);
+    }
+  }
+}
+
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
                                    const vector<LandmarkObs> &observations, 
@@ -125,6 +168,14 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   and the following is a good resource for the actual equation to implement
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
+  for(auto itr = particles.begin();itr!=particles.end();++itr){
+    std::vector<LandmarkObs> landMarksInRange;
+    std::vector<LandmarkObs> tmpObservations = observations;
+    Observe((*itr),map_landmarks,sensor_range,landMarksInRange);
+    dataAssociation((*itr),landMarksInRange,tmpObservations);
+    //update weight
+    
+  }
 
 }
 

@@ -64,7 +64,8 @@ class ParticleFilter {
    * @param predicted Vector of predicted landmark observations
    * @param observations Vector of landmark observations
    */
-  void dataAssociation(std::vector<LandmarkObs> predicted, 
+  void dataAssociation(Particle& particle,
+                       const std::vector<LandmarkObs>& predicted, 
                        std::vector<LandmarkObs>& observations);
   
   /**
@@ -97,13 +98,24 @@ class ParticleFilter {
                        const std::vector<double>& sense_y);
 
   /**
-   * Move a particle
+   * Move a particle and add a Gaussian Noise
    */
   void Move(Particle& particle, double vel, double yawRate, double dt,
             std::normal_distribution<double>& distr_x,
             std::normal_distribution<double>& distr_y,
             std::normal_distribution<double>& distr_theta,
             std::default_random_engine& gen);
+
+  /**
+   * Observation model. For this project, only get map landmarks within sensor range,
+   * does NOT translates them to observe (sensor) space, because of
+   * the way the Particle and Map classes are set up.
+   */
+  void Observe(const Particle& particle,
+               const Map& map,
+               double sensor_range,
+               std::vector<LandmarkObs>& LandMarksInRange);
+
   /**
    * initialized Returns whether particle filter is initialized yet or not.
    */
