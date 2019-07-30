@@ -141,3 +141,16 @@ Here, after running the simulator with my program, I localized the vehicle posit
 2. **Performance**: your particle filter should complete execution within the time of 100 seconds.
 
 Here, my program finished running the simulator in 100 seconds. Finally, I got the SUCCESS message.
+
+## Future TODO list
+Next step, I will re-write the following part to make this implementation more scalable and efficient:
+
+1. **Association**: I'll implement a K-d tree algorithm to speed it up.
+
+2. **Motion and Observation Model**: generic motion and observation models should be implemented as base classes for scalability.
+
+3. **Particle Structure**: a compare function can be added to it.
+
+4. **Think Bayes**: a family of Bayes Filters can be implemented, to work together with Motion and Observation models and Data Association algorithms as a framework to solve Perception problems in general.
+
+5. **Think beyond Bayes**: consider other probabilistic methods such as Dampster-Shafter.
