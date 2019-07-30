@@ -1,6 +1,8 @@
 # Overview
 This repository contains all the code needed to complete the final project for the Localization course in Udacity's Self-Driving Car Nanodegree.
 
+The code that I (haoyus) contributed to is in particle_filter.h, particle_filter.cpp and helper_functions.h.
+
 #### Submission
 All you will need to submit is your `src` directory. You should probably do a `git pull` before submitting to verify that your project passes the most up-to-date version of the grading code (there are some parameters in `src/main.cpp` which govern the requirements on accuracy and run time).
 
@@ -112,9 +114,9 @@ root
     |   particle_filter.h
 ```
 
-The only file you should modify is `particle_filter.cpp` in the `src` directory. The file contains the scaffolding of a `ParticleFilter` class and some associated methods. Read through the code, the comments, and the header file `particle_filter.h` to get a sense for what this code is expected to do.
+The files I modified are `particle_filter.h`, `particle_filter.cpp` and `helper_functions.h` in the `src` directory. The file contains the scaffolding of a `ParticleFilter` class and some associated methods.
 
-If you are interested, take a look at `src/main.cpp` as well. This file contains the code that will actually be running your particle filter and calling the associated methods.
+Specifically, I implemented the member methods of ParticleFilter class for it to localize the vehicle. In the init stage,I set the number of particles to be 100, and it turned out to be able to localize the vehicle accurately and fast enough. 
 
 ## Inputs to the Particle Filter
 You can find the inputs to the particle filter in the `data` directory.
@@ -130,14 +132,12 @@ You can find the inputs to the particle filter in the `data` directory.
 > * Map data provided by 3D Mapping Solutions GmbH.
 
 ## Success Criteria
-If your particle filter passes the current grading code in the simulator (you can make sure you have the current version at any time by doing a `git pull`), then you should pass!
-
-The things the grading code is looking for are:
-
+The accuracy and efficiency performance of my implementation is:
 
 1. **Accuracy**: your particle filter should localize vehicle position and yaw to within the values specified in the parameters `max_translation_error` and `max_yaw_error` in `src/main.cpp`.
 
+Here, after running the simulator with my program, I localized the vehicle position with X translation error of 0.114, Y translation error of 0.114, and Yaw error of 0.004.
+
 2. **Performance**: your particle filter should complete execution within the time of 100 seconds.
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+Here, my program finished running the simulator in 100 seconds. Finally, I got the SUCCESS message.
