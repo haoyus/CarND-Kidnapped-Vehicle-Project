@@ -13,6 +13,7 @@
 #include <vector>
 #include <random>
 #include "helper_functions.h"
+#include "kd_tree.h"
 
 struct Particle {
   int id;
